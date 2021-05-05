@@ -26,12 +26,12 @@ if test -f "$SMILESFILE"; then
                 mkdir $dirname
                 echo $dirname
                 cd $dirname
-                python /home/uccabsa/scripts/conf_search_min.py -s $i -n 15000
+                python conf_search.py -s $i -n 15000
                 cd ../
             fi
         done
     done
 else
-    python /home/uccabsa/scripts/conf_search_min.py -s $1 -n 15000
+    python conf_search_min.py -s $1 -n 15000
     cd ../
 fi
