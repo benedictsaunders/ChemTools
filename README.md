@@ -1,2 +1,2 @@
 # ConformerSearch
-A conformer searching tool, using RDKit's ETKDG module
+This tool is able to generate conformers from a given smile string. All of the conformers are then minimised with MMFF94, and the 5 geometries with the lowest forcefield energy are outputted as XYZ files in the form `[min_energy_order]_[conformer_ID].xyz`. However, all the geomteries found, both relaxed and not, can be accessed too. Before and after MMFF94 optmisation, the RDKit `mol` objects into which the conformers are embedded are [pickled](https://docs.python.org/3/library/pickle.html) and saved as `.pickle` files.
