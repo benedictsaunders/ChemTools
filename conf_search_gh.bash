@@ -32,6 +32,13 @@ if test -f "$SMILESFILE"; then
         done
     done
 else
-    python conf_search_min.py -s $1 -n 15000
+    while getopts s:n: flag
+    do
+        case "${flag}" in
+            s) smiles=${OPTARG};;
+            n) numconfs=${OPTARG};;
+        esac
+    done
+    python conf_search_min.py -s $smiles -n $numconfs
     cd ../
 fi
