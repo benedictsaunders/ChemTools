@@ -5,3 +5,4 @@ A series of tools that I developed, or adapted from others' work during my time 
 * Conformer Search (with ETKDG from RDKit)
 * Visualisation tool for of IP and EA values
 * SGE submission scripts and data collection for xTB IPEA calculations
+* XYZ File concatenator
