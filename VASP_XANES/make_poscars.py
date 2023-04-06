@@ -1,82 +1,139 @@
-from sys import argv
-from ase.io import read as read_ase
-from ase.io import write as write_ase
+from ase.io import read as ase_read
+from ase.io import write as ase_write
+from ase.build import make_supercell
 from ase.build.tools import sort as ase_sort
+from ase import Atoms
+import numpy as np
+from sys import argv
 from pprint import pprint
 from copy import deepcopy as dcp
+from tqdm import tqdm
+from os import system, environ
+from default_potcars import potentials
+from utils import *
 
 def newline(s):
-    return s+ "\n"
+    if type(s) == list:
+        l = [str(x) for x in s]
+        s = " ".join(l)
+    return str(s) + "\n"
 
-def write_poscar(name, comment, factor, lattice, species, counts, coord_type, positions):
-    with open(name, "w") as f:
-        f.writelines([str(s) for s in [
-            newline(comment),
-            newline(factor),
-            newline(lattice[0]),
-            newline(lattice[1]),
-            newline(lattice[2]),
-            newline(species),
-            newline(counts),
-            newline(coord_type),
-        ]] + [newline(p) for p in positions])
-    return 0
+class site:
+    def __init__(self, element, position, index) -> None:
+        self.element = element
+        self.position = position
+        self.index = index
 
-def make_poscars(target, inp):
+class POSCAR:
+    def __init__(self, lattice, factor, species, counts, coord_type) -> None:
+        self.lattice = lattice
+        self.factor = factor
+        self.sites = []
+        self.species = species
+        self.counts = counts
+        self.coord_type = coord_type
 
-    # First, we should normalise the inp to the order of things as in ASE
-    at = read_ase(inp)
-    at = ase_sort(at)
-    write_ase("POSCAR_TMP", at)
+def read_poscar(inp, outp, P = None):
+    at = ase_sort(ase_read(inp))
+    if P is not None:
+        at = ase_sort(make_supercell(at, P))
+    ase_write(outp, at)
 
-    # Reading the lines to designated vars
-    with open("POSCAR_TMP", "r") as f:
-        lines = [l.strip() for l in f.readlines()]
-        comment = lines[0]
-        factor = lines[1]
-        lattice = lines[2:5]
-        species = lines[5].split()
-        counts = [int(l) for l in lines[6].split()]
-        coord_type = lines[7]
-        coords = lines[8:-1]
-
-    # Getting the indexed positions of each specie in the POSCAR
-    # and reordering the counts and species.
-    coords_of_target = []
-    if target not in species:
-        print(f"Target species {target} not found in {inp}")
-        exit()
-    
-    d = dict()
-    c = 0
+    with open(outp, "r") as f:
+            lines = [l.strip() for l in f.readlines()]
+            comment = lines[0]
+            factor = lines[1]
+            lattice = lines[2:5]
+            species = lines[5].split()
+            counts = [int(l) for l in lines[6].split()]
+            coord_type = lines[7]
+            coords = lines[8:sum(counts)+8]
+    poscar = POSCAR(
+        lattice=lattice,
+        factor=factor,
+        species=species,
+        counts = counts,
+        coord_type=coord_type
+    )
+    poscar.sites = []
+    ordered_species = []
     for idx, s in enumerate(species):
-        if s == target:
-            new_species = species + [target]
-            target_pos = idx
-        try:
-            d[s] = d[s] + list(range(c, counts[idx] + c))
-        except:
-            d[s] = list(range(c, counts[idx] + c))
-        c =  counts[idx] + c + 1
-
-    counts.append(1)
-    counts[target_pos] -= 1
-
-    # Iterating the target positions to move repsective coordinates to end of list
-    print(d[target])
-    for idx, atom_idx in enumerate(d[target]):
-        new_coords = dcp(coords)
-        new_coords.append(new_coords.pop(atom_idx))
-        _ = write_poscar(
-            f"{inp}_{idx+1}",
-            comment + f" XANES on {target} iteration {idx+1}",
-            factor,
-            lattice,
-            " ".join(new_species),
-            " ".join(str(c) for c in counts),
-            coord_type,
-            new_coords,
+        ordered_species += [s] * counts[idx]
+    for idx, os in enumerate(ordered_species):
+        new_site = site(
+            element=os,
+            position=coords[idx],
+            index=idx
         )
+        poscar.sites.append(new_site)
+        del new_site
+
+    return poscar
+
+def write_poscar(poscar, name="POSCAR", comment=""):
+    lines = []
+    lines.append(newline(comment))
+    lines.append(newline(poscar.factor))
+    lines.append(newline(poscar.lattice[0]))
+    lines.append(newline(poscar.lattice[1]))
+    lines.append(newline(poscar.lattice[2]))
+    lines.append(newline(poscar.species))
+    lines.append(newline(poscar.counts))
+    lines.append(newline(poscar.coord_type))
+    for site in poscar.sites:
+        lines.append(newline(site.position))
+
+    with open(name, "w") as f:
+        f.writelines(lines)
+
+
+def iterate_supercell_primitive(inp, P, target):
+     
+    prim = read_poscar(inp, "POSCAR_xprimitive")
+    supercell = read_poscar(inp, "POSCAR_xsuper", P)
+
+    supercell_targets = []
+
+    for idx, site in tqdm(enumerate(prim.sites, 1), total=len(prim.sites)):
+        if site.element == target:
+            supercellc = dcp(supercell)
+            for sidx, supersite in enumerate(supercellc.sites):
+                if supersite.position == site.position:
+                    #supercell_targets[sidx] 
+
+                    target_site = supercellc.sites.pop(sidx)
+                    supercellc.sites.append(target_site)
+
+                    tidx = supercellc.species.index(target)
+                    supercellc.species.append(target)
+                    supercellc.counts.append(1)
+                    supercellc.counts[tidx] -= 1
+                    write_poscar(supercellc, name=f"POSCAR_{target}{idx}", comment=f" XANES on {target} iteration {idx}")
+
+
+def make_potcar(self, preferred_override=None):
+    pppath = environ.get("ASE_PP_PATH")
+    pots = []
+    for specie in list(self.new_species):
+        if preferred_override is not None:
+            p = preferred_override[specie]
+        else:
+            p = potentials.defaults[specie]
+        pots.append(
+            f"{pppath}/{p}/POTCAR"
+        )
+    pots_joined = " ".join(pots)    
+    system(f"cat {pots_joined} > POTCAR")
+
+def prep(self):
+    pass
+
 
 if __name__ == "__main__":
-    make_poscars("Fe", argv[1])
+    P = np.array([
+        [2,0,0],[0,2,0],[0,0,2]
+    ])
+    c = iterate_supercell_primitive(argv[1], P=P, target=argv[2])
+
+
+
