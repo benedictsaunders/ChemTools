@@ -92,8 +92,6 @@ def iterate_supercell_primitive(inp, P, target):
     prim = read_poscar(inp, "POSCAR_xprimitive")
     supercell = read_poscar(inp, "POSCAR_xsuper", P)
 
-    supercell_targets = []
-
     for idx, site in tqdm(enumerate(prim.sites, 1), total=len(prim.sites)):
         if site.element == target:
             supercellc = dcp(supercell)
@@ -108,13 +106,15 @@ def iterate_supercell_primitive(inp, P, target):
                     supercellc.species.append(target)
                     supercellc.counts.append(1)
                     supercellc.counts[tidx] -= 1
-                    write_poscar(supercellc, name=f"POSCAR_{target}{idx}", comment=f" XANES on {target} iteration {idx}")
+                    with cd(f"XANES_{target}_{idx}"):
+                        write_poscar(supercellc, name=f"POSCAR", comment=f" XANES on {target} iteration {idx}")
+                    break
+    return len([site.element for site in prim.sites if site.element == target]), supercellc.species, supercellc.counts
 
-
-def make_potcar(self, preferred_override=None):
+def make_potcar(order, preferred_override=None):
     pppath = environ.get("ASE_PP_PATH")
     pots = []
-    for specie in list(self.new_species):
+    for specie in order:
         if preferred_override is not None:
             p = preferred_override[specie]
         else:
@@ -125,15 +125,89 @@ def make_potcar(self, preferred_override=None):
     pots_joined = " ".join(pots)    
     system(f"cat {pots_joined} > POTCAR")
 
-def prep(self):
-    pass
+def make_incar(iters, ordering, counts, target, magmoms = None, hubbardU = None):
+    try:
+        open("INCAR").close()
+    except:
+        raise FileNotFoundError("INCAR")
+    ### Write POTCARS
+    for idx in range(1, iters+1):
+        with cd(f"XANES_{target}_{idx}"):
+            system("cp ../INCAR .")
+            with open("POSCAR", "r") as f:
+                lines = [l.strip() for l in f.readlines()]
+            species = lines[5].split()
+            make_potcar(species)
+            hubU, hubL, hubJ, mgms = [], [], [], []
+            for c, o in zip(counts, ordering):
+                if magmoms is not None:
+                    try:
+                        m = magmoms[o]
+                    except:
+                        m = 0.0
+                    mgms.append(f"{c}*{magmoms[o]}")
+                if hubbardU is not None:
+                    try:
+                        hdict = hubbardU[o]
+                    except:
+                        hdict = {"l":-1,"U":0.00,"J":0.00}
+                    hubJ.append(f"{c}*{hdict['J']}")
+                    hubU.append(f"{c}*{hdict['U']}")
+                    hubL.append(f"{c}*{hdict['l']}")
+            if magmoms is not None:
+                with open("INCAR", "a") as f:
+                    ms = " ".join(mgms)
+                    f.write(newline(f"MAGMOM = {ms}"))
+                    f.write(newline("ISPIN = 2"))
+            if hubbardU is not None:
+                with open("INCAR", "a") as f:
+                    l = " ".join(hubL)
+                    U = " ".join(hubU)
+                    J = " ".join(hubJ)
+                    print(l)
+                    print(U)
+                    print(J)
+                    f.write(newline("LDAU = .TRUE."))
+                    f.write(newline("LDAUTYPE = 2"))
+                    f.write(newline("MAGMOM = " + l))
+                    f.write(newline("MAGMOM = " + U))
+                    f.write(newline("MAGMOM = " + J))
+                    f.write(newline("LDAUPRINT = 2"))
+                    f.write(newline("ICORELEVEL = 2"))
+                    f.write(newline(f"CLNT = {sum(counts)}"))
+                    f.write(newline("CLN = 1"))
+                    f.write(newline("CLL = 0"))
+                    f.write(newline("CLZ = 1.0"))
+                    f.write(newline("CH_LSPEC = .TRUE."))
+                    f.write(newline("CH_SIGMA = 0.5"))
+                    f.write(newline("NBANDS = 300"))
+                    f.write(newline(""))
 
+
+                
+
+    ### Write INCAR
+
+def submit():
+    pass
 
 if __name__ == "__main__":
     P = np.array([
         [2,0,0],[0,2,0],[0,0,2]
     ])
-    c = iterate_supercell_primitive(argv[1], P=P, target=argv[2])
+    magmoms = {
+        "Fe": 5.0,
+        "Nb": 0.6,
+        "O": 0.6
+    }
+    hubbardU = {
+        "Fe":{"l":2,"U":4,"J":0,}
+    }
+    input_file = argv[1]
+    target = argv[2]
+    iters, species_order, species_counts = iterate_supercell_primitive(input_file, P=P, target=target)
+    make_incar(iters, species_order, species_counts, target, magmoms=magmoms, hubbardU=hubbardU)
+
 
 
 
