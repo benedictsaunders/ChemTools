@@ -11,6 +11,7 @@ from tqdm import tqdm
 from os import system, environ
 from data import potentials, XrayNotation
 from utils import *
+import argparse as ap
 
 def newline(s):
     if type(s) == list:
@@ -130,7 +131,6 @@ def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hub
         open("INCAR").close()
     except:
         raise FileNotFoundError("INCAR")
-    ### Write POTCARS
     for idx in range(1, iters+1):
         with cd(f"XANES_{target}_{idx}"):
             system("cp ../INCAR .")
@@ -164,9 +164,6 @@ def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hub
                     l = " ".join(hubL)
                     U = " ".join(hubU)
                     J = " ".join(hubJ)
-                    print(l)
-                    print(U)
-                    print(J)
                     f.write(newline("LDAU = .TRUE."))
                     f.write(newline("LDAUTYPE = 2"))
                     f.write(newline("LDAUL = " + l))
@@ -192,21 +189,29 @@ def submit():
     pass
 
 if __name__ == "__main__":
+    parser = ap.ArgumentParser()
+    parser.add_argument("--supercell", "-r", nargs=3, help="P matrix", default=[2,2,2])
+    parser.add_argument("--target", "-t", type=str, required=True, help="Target species")
+    parser.add_argument("--luj", "-luj", help="Hubbard corrections")
+    parser.add_argument("--magmoms", "-mgm", help="Initial magnetic moments")
+    parser.add_argument("--input", "-i", help="Input VASP geometry, def.: POSCAR", default="POSCAR")
+    args = parser.parse_args()
+
     P = np.array([
-        [2,0,0],[0,2,0],[0,0,2]
+        [int(args.supercell[0]),0,0],
+        [0,int(args.supercell[1]),0],
+        [0,0,int(args.supercell[2])]
     ])
-    magmoms = {
-        "Fe": 5.0,
-        "Nb": 0.6,
-        "O": 0.6
-    }
-    hubbardU = {
-        "Fe":{"l":2,"U":4,"J":0,}
-    }
-    input_file = argv[1]
-    target = argv[2]
+    input_file = args.input
+    target = args.target
+
     iters, species_order, species_counts = iterate_supercell_primitive(input_file, P=P, target=target)
-    make_incar(iters, species_order, species_counts, target, Xtype, magmoms=magmoms, hubbardU=hubbardU)
+
+    syms = list(set(species_order))
+    magmoms = handle_magmoms(args.magmoms, syms)
+    hubbardU = handle_hubbard(args.luj, syms)
+    
+    make_incar(iters, species_order, species_counts, target, Xtype="K1", magmoms=magmoms, hubbardU=hubbardU)
 
 
 
