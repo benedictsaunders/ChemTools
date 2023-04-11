@@ -1,3 +1,5 @@
+
+from utils import *
 class potentials:
     defaults = {
         "H": "H",
@@ -98,8 +100,8 @@ class potentials:
     }
 
 class XrayNotation:
-    edge = {
-        ["K", "K1"]:{
+    edge = AliasDict({
+        "K":{
         "n":1, "l":0, "s":0.5, "j":0.5
         },
         "L1":{
@@ -111,4 +113,5 @@ class XrayNotation:
         "L3":{
         "n":2, "l":1, "s":0.5, "j":1.5
         }
-    }
+    })
+XrayNotation.edge.add_alias("K", "K1")
