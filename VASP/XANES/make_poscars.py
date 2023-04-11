@@ -206,8 +206,8 @@ if __name__ == "__main__":
     target = args.target
 
     iters, species_order, species_counts = iterate_supercell_primitive(input_file, P=P, target=target)
-
     syms = list(set(species_order))
+    print(syms)
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
     
