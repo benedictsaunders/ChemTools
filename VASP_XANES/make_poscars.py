@@ -9,7 +9,7 @@ from pprint import pprint
 from copy import deepcopy as dcp
 from tqdm import tqdm
 from os import system, environ
-from default_potcars import potentials
+from data import potentials, XrayNotation
 from utils import *
 
 def newline(s):
@@ -125,7 +125,7 @@ def make_potcar(order, preferred_override=None):
     pots_joined = " ".join(pots)    
     system(f"cat {pots_joined} > POTCAR")
 
-def make_incar(iters, ordering, counts, target, magmoms = None, hubbardU = None):
+def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hubbardU = None):
     try:
         open("INCAR").close()
     except:
@@ -169,14 +169,14 @@ def make_incar(iters, ordering, counts, target, magmoms = None, hubbardU = None)
                     print(J)
                     f.write(newline("LDAU = .TRUE."))
                     f.write(newline("LDAUTYPE = 2"))
-                    f.write(newline("MAGMOM = " + l))
-                    f.write(newline("MAGMOM = " + U))
-                    f.write(newline("MAGMOM = " + J))
+                    f.write(newline("LDAUL = " + l))
+                    f.write(newline("LDAUU = " + U))
+                    f.write(newline("LDAUJ = " + J))
                     f.write(newline("LDAUPRINT = 2"))
                     f.write(newline("ICORELEVEL = 2"))
                     f.write(newline(f"CLNT = {sum(counts)}"))
-                    f.write(newline("CLN = 1"))
-                    f.write(newline("CLL = 0"))
+                    f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
+                    f.write(newline(f"CLL = {XrayNotation.edge[Xtype]['l']}"))
                     f.write(newline("CLZ = 1.0"))
                     f.write(newline("CH_LSPEC = .TRUE."))
                     f.write(newline("CH_SIGMA = 0.5"))
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     input_file = argv[1]
     target = argv[2]
     iters, species_order, species_counts = iterate_supercell_primitive(input_file, P=P, target=target)
-    make_incar(iters, species_order, species_counts, target, magmoms=magmoms, hubbardU=hubbardU)
+    make_incar(iters, species_order, species_counts, target, Xtype, magmoms=magmoms, hubbardU=hubbardU)
 
 
 
