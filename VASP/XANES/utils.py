@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import os
+from pprint import pprint
 
 class AliasDict(dict):
     """
@@ -23,8 +24,8 @@ class AliasDict(dict):
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
-    if not os.path.exists(f"{prevdir}/{newdir}"):
-        os.mkdir(newdir)
+    # if not os.path.exists(f"{prevdir}/{newdir}"):
+    #     os.mkdir(newdir)
     os.chdir(os.path.expanduser(newdir))
     try:
         yield
@@ -45,13 +46,10 @@ def handle_magmoms(magmoms, symbols):
     elements = magmoms[::2]
     values = magmoms[1::2]
     d = dict(zip(elements, values))
-    init_mgm = []
     for s in symbols:
-        if s not in elements:
-            init_mgm.append(0)
-        else:
-            init_mgm.append(d[s])
-    return init_mgm
+        if s not in d.keys():
+            d[s] = 0
+    return d
 
 def handle_hubbard(luj, symbols):
     """
@@ -61,17 +59,17 @@ def handle_hubbard(luj, symbols):
     if luj is None:
         print("Hubbard corrections not set.")
         return None
-    labels = ["L", "U", "J"]
+    labels = ["l", "U", "J"]
     n = 4
     elements = []
-    d = {}
+    d = AliasDict()
     separated = [luj[i: i + n] for i in range(0, len(luj), n)]
     for indiv in separated:
         elements.append(indiv[0])
-        d[indiv[0]] = dict(zip(labels, [float(x) for x in indiv[-3:]]))
+        d[indiv[0]] = AliasDict(zip(labels, [float(x) for x in indiv[-3:]]))
     for s in symbols:
         if s not in elements:
-            d[s] = dict(
+            d[s] = AliasDict(
                 zip(labels, [-1, 0, 0])
             )  # Negative 1 for no onsite interation added.
     return d

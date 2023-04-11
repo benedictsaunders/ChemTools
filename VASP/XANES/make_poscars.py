@@ -108,7 +108,7 @@ def iterate_supercell_primitive(inp, P, target):
                     supercellc.counts.append(1)
                     supercellc.counts[tidx] -= 1
                     with cd(f"XANES_{target}_{idx}"):
-                        write_poscar(supercellc, name=f"POSCAR", comment=f" XANES on {target} iteration {idx}")
+                        write_poscar(supercellc, name="POSCAR", comment=f" XANES on {target} iteration {idx}")
                     break
     return len([site.element for site in prim.sites if site.element == target]), supercellc.species, supercellc.counts
 
