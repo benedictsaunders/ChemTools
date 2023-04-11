@@ -24,8 +24,8 @@ class AliasDict(dict):
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
-    # if not os.path.exists(f"{prevdir}/{newdir}"):
-    #     os.mkdir(newdir)
+    if not os.path.exists(f"{prevdir}/{newdir}"):
+        os.mkdir(newdir)
     os.chdir(os.path.expanduser(newdir))
     try:
         yield

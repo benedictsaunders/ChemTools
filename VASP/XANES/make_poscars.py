@@ -89,12 +89,15 @@ def write_poscar(poscar, name="POSCAR", comment=""):
 
 
 def iterate_supercell_primitive(inp, P, target):
-     
+    idx = 0
     prim = read_poscar(inp, "POSCAR_xprimitive")
     supercell = read_poscar(inp, "POSCAR_xsuper", P)
 
-    for idx, site in tqdm(enumerate(prim.sites, 1), total=len(prim.sites)):
+    for site in tqdm(prim.sites, total=len(prim.sites)):
+        print(site.element)
         if site.element == target:
+            tqdm.write("Found site.")
+            idx += 1
             supercellc = dcp(supercell)
             for sidx, supersite in enumerate(supercellc.sites):
                 if supersite.position == site.position:
