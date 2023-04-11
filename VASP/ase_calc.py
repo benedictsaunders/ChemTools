@@ -1,6 +1,6 @@
 """
 ASE_CALC
-formally VASP 4 USPEX
+formerlly VASP 4 USPEX
 -- Benedict Saunders, 2022
     A nice little script to use as the vasp runner for USPEX (etc) calculations, which
     allows you to add things like hubbard factors, magetic moments and other such
