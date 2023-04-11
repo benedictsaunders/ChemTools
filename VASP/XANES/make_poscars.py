@@ -192,8 +192,8 @@ if __name__ == "__main__":
     parser = ap.ArgumentParser()
     parser.add_argument("--supercell", "-r", nargs=3, help="P matrix", default=[2,2,2])
     parser.add_argument("--target", "-t", type=str, required=True, help="Target species")
-    parser.add_argument("--luj", "-luj", help="Hubbard corrections")
-    parser.add_argument("--magmoms", "-mgm", help="Initial magnetic moments")
+    parser.add_argument("--luj", "-luj", nargs="*", help="Hubbard corrections")
+    parser.add_argument("--magmoms", "-mgm", nargs="*", help="Initial magnetic moments")
     parser.add_argument("--input", "-i", help="Input VASP geometry, def.: POSCAR", default="POSCAR")
     args = parser.parse_args()
 
