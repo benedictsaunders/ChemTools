@@ -27,6 +27,8 @@ def handle_magmoms(atoms, magmoms):
         'O': 0.6
         }
     """
+    if magmoms == None:
+        return atoms
     elements = magmoms[::2]
     values = magmoms[1::2]
     d = dict(zip(elements, values))

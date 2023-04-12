@@ -11,13 +11,6 @@ from utils import *
 import argparse as ap
 
 
-def newline(s):
-    if type(s) == list:
-        l = [str(x) for x in s]
-        s = " ".join(l)
-    return str(s) + "\n"
-
-
 class site:
     def __init__(self, element, position, index) -> None:
         self.element = element
@@ -134,7 +127,7 @@ def make_potcar(order, family="potpaw_PBE", preferred_override=None):
     system(f"cat {pots_joined} > POTCAR")
 
 
-def make_incar(iters, ordering, counts, target, Xtype="K", magmoms=None, hubbardU=None):
+def make_incar(iters, ordering, counts, target, nbands, Xtype="K", magmoms=None, hubbardU=None):
     try:
         open("INCAR").close()
     except:
@@ -145,6 +138,7 @@ def make_incar(iters, ordering, counts, target, Xtype="K", magmoms=None, hubbard
             with open("POSCAR", "r") as f:
                 lines = [l.strip() for l in f.readlines()]
             species = lines[5].split()
+            assert len(species) == len(counts)
             make_potcar(species)
             hubU, hubL, hubJ, mgms = [], [], [], []
             for c, o in zip(counts, ordering):
@@ -179,16 +173,14 @@ def make_incar(iters, ordering, counts, target, Xtype="K", magmoms=None, hubbard
                     f.write(newline("LDAUJ = " + J))
                     f.write(newline("LDAUPRINT = 2"))
                     f.write(newline("ICORELEVEL = 2"))
-                    f.write(newline(f"CLNT = {sum(counts)}"))
+                    f.write(newline(f"CLNT = {len(species)}"))
                     f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
                     f.write(newline(f"CLL = {XrayNotation.edge[Xtype]['l']}"))
                     f.write(newline("CLZ = 1.0"))
                     f.write(newline("CH_LSPEC = .TRUE."))
                     f.write(newline("CH_SIGMA = 0.5"))
-                    f.write(newline("NBANDS = 300"))
+                    f.write(newline(f"NBANDS = {nbands}"))
                     f.write(newline(""))
-
-    ### Write INCAR
 
 
 def submit():
@@ -238,6 +230,7 @@ if __name__ == "__main__":
         species_order,
         species_counts,
         target,
+        nbands,
         Xtype=args.simplesiegbahn,
         magmoms=magmoms,
         hubbardU=hubbardU,

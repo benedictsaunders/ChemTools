@@ -74,3 +74,8 @@ def handle_hubbard(luj, symbols):
             )  # Negative 1 for no onsite interation added.
     return d
 
+def newline(s):
+    if type(s) == list:
+        l = [str(x) for x in s]
+        s = " ".join(l)
+    return str(s) + "\n"
