@@ -5,7 +5,7 @@ from ase.build.tools import sort as ase_sort
 import numpy as np
 from copy import deepcopy as dcp
 from tqdm import tqdm
-from os import system, environ
+from os import system, environ, path
 from data import potentials, XrayNotation
 from utils import *
 import argparse as ap
@@ -114,7 +114,7 @@ def iterate_supercell_primitive(inp, P, target):
     )
 
 
-def make_potcar(order, family="potpaw_PBE", preferred_override=None):
+def make_potcar(order, family="potpaw_PBE", preferred_override=None, useGW=False):
     pppath = environ.get("VASP_PP_PATH") + "/" + family
     pots = []
     for specie in order:
@@ -122,13 +122,24 @@ def make_potcar(order, family="potpaw_PBE", preferred_override=None):
             p = preferred_override[specie]
         else:
             p = potentials.defaults[specie]
+        if useGW and path.isfile(f"{pppath}/{p}_GW/POTCAR"):
+            p += "_GW"
         pots.append(f"{pppath}/{p}/POTCAR")
     pots_joined = " ".join(pots)
     system(f"cat {pots_joined} > POTCAR")
 
 
 def make_incar(
-    iters, ordering, counts, target, nbands, Xtype="K", magmoms=None, hubbardU=None
+    iters,
+    ordering,
+    counts,
+    target,
+    nbands,
+    Xtype="K",
+    magmoms=None,
+    hubbardU=None,
+    potpawFamily="potpaw_PBE",
+    useGW=False,
 ):
     dirs = []
     if not os.path.isfile("INCAR"):
@@ -142,7 +153,7 @@ def make_incar(
                 lines = [l.strip() for l in f.readlines()]
             species = lines[5].split()
             assert len(species) == len(counts)
-            make_potcar(species)
+            make_potcar(species, family=potpawFamily, useGW=useGW)
             hubU, hubL, hubJ, mgms = [], [], [], []
             for c, o in zip(counts, ordering):
                 if magmoms is not None:
@@ -230,6 +241,7 @@ if __name__ == "__main__":
         help="Job submission command and file",
         default=["sbatch", "x.sub"],
     )
+    parser.add_argument("--gw", "-gw", action="store_true", help="Use GW POTCARs")
     args = parser.parse_args()
 
     P = np.array(
@@ -260,6 +272,7 @@ if __name__ == "__main__":
         Xtype=args.simplesiegbahn,
         magmoms=magmoms,
         hubbardU=hubbardU,
+        useGW=args.gw,
     )
 
     submit(directories, submission[0], submission[1])
