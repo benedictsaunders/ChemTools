@@ -73,3 +73,4 @@ def handle_hubbard(luj, symbols):
                 zip(labels, [-1, 0, 0])
             )  # Negative 1 for no onsite interation added.
     return d
+
