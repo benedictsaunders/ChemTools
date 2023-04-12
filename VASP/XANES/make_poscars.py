@@ -125,8 +125,8 @@ def iterate_supercell_primitive(inp, P, target):
     )
 
 
-def make_potcar(order, preferred_override=None):
-    pppath = environ.get("VASP_PP_PATH")
+def make_potcar(order, family="potpaw_PBE", preferred_override=None):
+    pppath = environ.get("VASP_PP_PATH") + "/" + family
     pots = []
     for specie in order:
         if preferred_override is not None:
