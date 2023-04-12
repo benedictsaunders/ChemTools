@@ -187,7 +187,7 @@ def make_incar(
     return dirs
 
 
-def submit(dirs, subcmd, subfilebah):
+def submit(dirs, subcmd, subfile):
     print("Submitting jobs")
     for dir in dirs:
         with cd(dir):
