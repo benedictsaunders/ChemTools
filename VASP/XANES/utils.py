@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 import os
 from pprint import pprint
+import subprocess as sp
+
 
 class AliasDict(dict):
     """
@@ -8,6 +10,7 @@ class AliasDict(dict):
     Stolen from jasonharper on StackOverflow (I won't tel; if you don't!)
     Thanks Jason :)
     """
+
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self.aliases = {}
@@ -21,6 +24,7 @@ class AliasDict(dict):
     def add_alias(self, key, alias):
         self.aliases[alias] = key
 
+
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -31,6 +35,7 @@ def cd(newdir):
         yield
     finally:
         os.chdir(prevdir)
+
 
 def handle_magmoms(magmoms, symbols):
     """
@@ -51,9 +56,10 @@ def handle_magmoms(magmoms, symbols):
             d[s] = 0
     return d
 
+
 def handle_hubbard(luj, symbols):
     """
-    Takes the argparse input and transform it to a nested dictionary, 
+    Takes the argparse input and transform it to a nested dictionary,
     and accounts for unmentioed species in the correction.
     """
     if luj is None:
@@ -63,7 +69,7 @@ def handle_hubbard(luj, symbols):
     n = 4
     elements = []
     d = AliasDict()
-    separated = [luj[i: i + n] for i in range(0, len(luj), n)]
+    separated = [luj[i : i + n] for i in range(0, len(luj), n)]
     for indiv in separated:
         elements.append(indiv[0])
         d[indiv[0]] = AliasDict(zip(labels, [float(x) for x in indiv[-3:]]))
@@ -74,8 +80,16 @@ def handle_hubbard(luj, symbols):
             )  # Negative 1 for no onsite interation added.
     return d
 
+
 def newline(s):
     if type(s) == list:
         l = [str(x) for x in s]
         s = " ".join(l)
     return str(s) + "\n"
+
+
+def runcmd(cmd, outfile=sp.PIPE, errfile=sp.PIPE):
+    if not isinstance(cmd, list):
+        cmd = [cmd]
+    output = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+    return output

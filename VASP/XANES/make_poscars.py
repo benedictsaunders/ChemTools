@@ -127,13 +127,16 @@ def make_potcar(order, family="potpaw_PBE", preferred_override=None):
     system(f"cat {pots_joined} > POTCAR")
 
 
-def make_incar(iters, ordering, counts, target, nbands, Xtype="K", magmoms=None, hubbardU=None):
-    try:
-        open("INCAR").close()
-    except:
+def make_incar(
+    iters, ordering, counts, target, nbands, Xtype="K", magmoms=None, hubbardU=None
+):
+    dirs = []
+    if not os.path.isfile("INCAR"):
         raise FileNotFoundError("INCAR")
     for idx in range(1, iters + 1):
-        with cd(f"XANES_{target}_{idx}"):
+        dir = f"XANES_{target}_{idx}"
+        dirs.append(dir)
+        with cd(dir):
             system("cp ../INCAR .")
             with open("POSCAR", "r") as f:
                 lines = [l.strip() for l in f.readlines()]
@@ -181,10 +184,17 @@ def make_incar(iters, ordering, counts, target, nbands, Xtype="K", magmoms=None,
                     f.write(newline("CH_SIGMA = 0.5"))
                     f.write(newline(f"NBANDS = {nbands}"))
                     f.write(newline(""))
+    return dirs
 
-
-def submit():
-    pass
+def submit(dirs, subfile, subcmd):
+    print("Submitting jobs")
+    for dir in dirs:
+        with cd(dir):
+            pwd = os.getcwd()
+            os.system(f"cp ../{subfile} .")
+            print(f"Submitting in {pwd}")
+            out = runcmd([subcmd, subfile])
+            print(out.stdout)
 
 
 if __name__ == "__main__":
@@ -206,6 +216,19 @@ if __name__ == "__main__":
         help="XRay notation of the initial energy level",
         default="K1",
     )
+    parser.add_argument(
+        "--bands",
+        "-b",
+        help="Number of bands to consider in the VASP calculation.",
+        default=400,
+    )
+    parser.add_argument(
+        "--sub",
+        "-s",
+        nargs=2
+        help="Job submission command and file",
+        default=["sbatch", "x.sub"]
+    )
     args = parser.parse_args()
 
     P = np.array(
@@ -217,6 +240,8 @@ if __name__ == "__main__":
     )
     input_file = args.input
     target = args.target
+    nbands = args.bands
+    submission = args.sub
 
     iters, species_order, species_counts = iterate_supercell_primitive(
         input_file, P=P, target=target
@@ -225,7 +250,7 @@ if __name__ == "__main__":
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
 
-    make_incar(
+    directories = make_incar(
         iters,
         species_order,
         species_counts,
@@ -235,3 +260,5 @@ if __name__ == "__main__":
         magmoms=magmoms,
         hubbardU=hubbardU,
     )
+
+    submit(directories, submission[0], submission[1])
