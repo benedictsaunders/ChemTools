@@ -2,10 +2,7 @@ from ase.io import read as ase_read
 from ase.io import write as ase_write
 from ase.build import make_supercell
 from ase.build.tools import sort as ase_sort
-from ase import Atoms
 import numpy as np
-from sys import argv
-from pprint import pprint
 from copy import deepcopy as dcp
 from tqdm import tqdm
 from os import system, environ
@@ -95,7 +92,6 @@ def iterate_supercell_primitive(inp, P, target):
     supercell = read_poscar(inp, "POSCAR_xsuper", P)
 
     for site in tqdm(prim.sites, total=len(prim.sites)):
-        print(site.element)
         if site.element == target:
             tqdm.write("Found site.")
             idx += 1
@@ -234,7 +230,6 @@ if __name__ == "__main__":
         input_file, P=P, target=target
     )
     syms = list(set(species_order))
-    print(syms)
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
 
