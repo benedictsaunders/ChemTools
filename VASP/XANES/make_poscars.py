@@ -13,17 +13,20 @@ from data import potentials, XrayNotation
 from utils import *
 import argparse as ap
 
+
 def newline(s):
     if type(s) == list:
         l = [str(x) for x in s]
         s = " ".join(l)
     return str(s) + "\n"
 
+
 class site:
     def __init__(self, element, position, index) -> None:
         self.element = element
         self.position = position
         self.index = index
+
 
 class POSCAR:
     def __init__(self, lattice, factor, species, counts, coord_type) -> None:
@@ -34,42 +37,40 @@ class POSCAR:
         self.counts = counts
         self.coord_type = coord_type
 
-def read_poscar(inp, outp, P = None):
+
+def read_poscar(inp, outp, P=None):
     at = ase_sort(ase_read(inp))
     if P is not None:
         at = ase_sort(make_supercell(at, P))
     ase_write(outp, at)
 
     with open(outp, "r") as f:
-            lines = [l.strip() for l in f.readlines()]
-            comment = lines[0]
-            factor = lines[1]
-            lattice = lines[2:5]
-            species = lines[5].split()
-            counts = [int(l) for l in lines[6].split()]
-            coord_type = lines[7]
-            coords = lines[8:sum(counts)+8]
+        lines = [l.strip() for l in f.readlines()]
+        comment = lines[0]
+        factor = lines[1]
+        lattice = lines[2:5]
+        species = lines[5].split()
+        counts = [int(l) for l in lines[6].split()]
+        coord_type = lines[7]
+        coords = lines[8 : sum(counts) + 8]
     poscar = POSCAR(
         lattice=lattice,
         factor=factor,
         species=species,
-        counts = counts,
-        coord_type=coord_type
+        counts=counts,
+        coord_type=coord_type,
     )
     poscar.sites = []
     ordered_species = []
     for idx, s in enumerate(species):
         ordered_species += [s] * counts[idx]
     for idx, os in enumerate(ordered_species):
-        new_site = site(
-            element=os,
-            position=coords[idx],
-            index=idx
-        )
+        new_site = site(element=os, position=coords[idx], index=idx)
         poscar.sites.append(new_site)
         del new_site
 
     return poscar
+
 
 def write_poscar(poscar, name="POSCAR", comment=""):
     lines = []
@@ -101,7 +102,7 @@ def iterate_supercell_primitive(inp, P, target):
             supercellc = dcp(supercell)
             for sidx, supersite in enumerate(supercellc.sites):
                 if supersite.position == site.position:
-                    #supercell_targets[sidx] 
+                    # supercell_targets[sidx]
 
                     target_site = supercellc.sites.pop(sidx)
                     supercellc.sites.append(target_site)
@@ -111,30 +112,38 @@ def iterate_supercell_primitive(inp, P, target):
                     supercellc.counts.append(1)
                     supercellc.counts[tidx] -= 1
                     with cd(f"XANES_{target}_{idx}"):
-                        write_poscar(supercellc, name="POSCAR", comment=f" XANES on {target} iteration {idx}")
+                        write_poscar(
+                            supercellc,
+                            name="POSCAR",
+                            comment=f" XANES on {target} iteration {idx}",
+                        )
                     break
-    return len([site.element for site in prim.sites if site.element == target]), supercellc.species, supercellc.counts
+    return (
+        len([site.element for site in prim.sites if site.element == target]),
+        supercellc.species,
+        supercellc.counts,
+    )
+
 
 def make_potcar(order, preferred_override=None):
-    pppath = environ.get("ASE_PP_PATH")
+    pppath = environ.get("VASP_PP_PATH")
     pots = []
     for specie in order:
         if preferred_override is not None:
             p = preferred_override[specie]
         else:
             p = potentials.defaults[specie]
-        pots.append(
-            f"{pppath}/{p}/POTCAR"
-        )
-    pots_joined = " ".join(pots)    
+        pots.append(f"{pppath}/{p}/POTCAR")
+    pots_joined = " ".join(pots)
     system(f"cat {pots_joined} > POTCAR")
 
-def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hubbardU = None):
+
+def make_incar(iters, ordering, counts, target, Xtype="K", magmoms=None, hubbardU=None):
     try:
         open("INCAR").close()
     except:
         raise FileNotFoundError("INCAR")
-    for idx in range(1, iters+1):
+    for idx in range(1, iters + 1):
         with cd(f"XANES_{target}_{idx}"):
             system("cp ../INCAR .")
             with open("POSCAR", "r") as f:
@@ -153,7 +162,7 @@ def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hub
                     try:
                         hdict = hubbardU[o]
                     except:
-                        hdict = {"l":-1,"U":0.00,"J":0.00}
+                        hdict = {"l": -1, "U": 0.00, "J": 0.00}
                     hubJ.append(f"{c}*{hdict['J']}")
                     hubU.append(f"{c}*{hdict['U']}")
                     hubL.append(f"{c}*{hdict['l']}")
@@ -183,39 +192,58 @@ def make_incar(iters, ordering, counts, target, Xtype = "K", magmoms = None, hub
                     f.write(newline("NBANDS = 300"))
                     f.write(newline(""))
 
-
-                
-
     ### Write INCAR
+
 
 def submit():
     pass
 
+
 if __name__ == "__main__":
     parser = ap.ArgumentParser()
-    parser.add_argument("--supercell", "-r", nargs=3, help="P matrix", default=[2,2,2])
-    parser.add_argument("--target", "-t", type=str, required=True, help="Target species")
+    parser.add_argument(
+        "--supercell", "-r", nargs=3, help="P matrix", default=[2, 2, 2]
+    )
+    parser.add_argument(
+        "--target", "-t", type=str, required=True, help="Target species"
+    )
     parser.add_argument("--luj", "-luj", nargs="*", help="Hubbard corrections")
     parser.add_argument("--magmoms", "-mgm", nargs="*", help="Initial magnetic moments")
-    parser.add_argument("--input", "-i", help="Input VASP geometry, def.: POSCAR", default="POSCAR")
+    parser.add_argument(
+        "--input", "-i", help="Input VASP geometry, def.: POSCAR", default="POSCAR"
+    )
+    parser.add_argument(
+        "--simplesiegbahn",
+        "-ssieg",
+        help="XRay notation of the initial energy level",
+        default="K1",
+    )
     args = parser.parse_args()
 
-    P = np.array([
-        [int(args.supercell[0]),0,0],
-        [0,int(args.supercell[1]),0],
-        [0,0,int(args.supercell[2])]
-    ])
+    P = np.array(
+        [
+            [int(args.supercell[0]), 0, 0],
+            [0, int(args.supercell[1]), 0],
+            [0, 0, int(args.supercell[2])],
+        ]
+    )
     input_file = args.input
     target = args.target
 
-    iters, species_order, species_counts = iterate_supercell_primitive(input_file, P=P, target=target)
+    iters, species_order, species_counts = iterate_supercell_primitive(
+        input_file, P=P, target=target
+    )
     syms = list(set(species_order))
     print(syms)
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
-    
-    make_incar(iters, species_order, species_counts, target, Xtype="K1", magmoms=magmoms, hubbardU=hubbardU)
 
-
-
-
+    make_incar(
+        iters,
+        species_order,
+        species_counts,
+        target,
+        Xtype=args.simplesiegbahn,
+        magmoms=magmoms,
+        hubbardU=hubbardU,
+    )
