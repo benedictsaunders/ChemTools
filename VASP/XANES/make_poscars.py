@@ -186,6 +186,7 @@ def make_incar(
                     f.write(newline(""))
     return dirs
 
+
 def submit(dirs, subfile, subcmd):
     print("Submitting jobs")
     for dir in dirs:
@@ -225,9 +226,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sub",
         "-s",
-        nargs=2
+        nargs=2,
         help="Job submission command and file",
-        default=["sbatch", "x.sub"]
+        default=["sbatch", "x.sub"],
     )
     args = parser.parse_args()
 
