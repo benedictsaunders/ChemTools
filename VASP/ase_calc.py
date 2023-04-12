@@ -65,6 +65,12 @@ if __name__ == "__main__":
 
     parser = ap.ArgumentParser()
     parser.add_argument(
+        "-i",
+        "--input",
+        default="POSCAR",
+        help="Input filename"
+    )
+    parser.add_argument(
         "-c",
         "--cores",
         type=int,
