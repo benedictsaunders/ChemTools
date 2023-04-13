@@ -91,6 +91,7 @@ def iterate_supercell_primitive(inp, P, target):
             supercellc = dcp(supercell)
             for sidx, supersite in enumerate(supercellc.sites):
                 if supersite.position == site.position:
+                    print(idx)
                     # supercell_targets[sidx]
 
                     target_site = supercellc.sites.pop(sidx)
