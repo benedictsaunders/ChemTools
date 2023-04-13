@@ -126,7 +126,8 @@ def make_potcar(order, family="potpaw_PBE", preferred_override=None, useGW=False
             p += "_GW"
         pots.append(f"{pppath}/{p}/POTCAR")
     pots_joined = " ".join(pots)
-    system(f"cat {pots_joined} > POTCAR")
+    with open("POTCAR", "w") as potcar:
+        _ = runcmd(["cat"] + pots, outlocation=potcar)
 
 
 def make_incar(
@@ -148,7 +149,7 @@ def make_incar(
         dir = f"XANES_{target}_{idx}"
         dirs.append(dir)
         with cd(dir):
-            system("cp ../INCAR .")
+            runcmd(["cp", "../INCAR", "."])
             with open("POSCAR", "r") as f:
                 lines = [l.strip() for l in f.readlines()]
             species = lines[5].split()
@@ -203,7 +204,7 @@ def submit(dirs, subcmd, subfile):
     for dir in dirs:
         with cd(dir):
             pwd = os.getcwd()
-            os.system(f"cp ../{subfile} .")
+            _ = runcmd(["cp", f"../{subfile}", "."])
             print(f"Submitting in {pwd}")
             out = runcmd([subcmd, subfile])
             print(out.stdout)

@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import os
 from pprint import pprint
 import subprocess as sp
+from io import TextIOWrapper
 
 
 class AliasDict(dict):
@@ -24,6 +25,16 @@ class AliasDict(dict):
     def add_alias(self, key, alias):
         self.aliases[alias] = key
 
+def get_lines(file_object):
+    assert isinstance(file_object, TextIOWrapper)
+    return [l.strip() for l in file_object.readlines()]
+
+class input_file:
+    def __init__(self, fname) -> None:
+        with open(fname, "r") as f:
+            for line in get_lines(f):
+                pass
+        pass
 
 @contextmanager
 def cd(newdir):
@@ -88,8 +99,8 @@ def newline(s):
     return str(s) + "\n"
 
 
-def runcmd(cmd, outfile=sp.PIPE, errfile=sp.PIPE):
+def runcmd(cmd, outlocation=sp.PIPE, errlocation=sp.PIPE):
     if not isinstance(cmd, list):
         cmd = [cmd]
-    output = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+    output = sp.run(cmd, stdout=outlocation, stderr=errlocation)
     return output
