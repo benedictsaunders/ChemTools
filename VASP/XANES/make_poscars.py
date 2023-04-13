@@ -31,8 +31,8 @@ class POSCAR:
 def read_poscar(inp, outp, P=None):
     at = ase_sort(ase_read(inp))
     if P is not None:
-        at = ase_sort(make_supercell(at, P))
-    ase_write(outp, at)
+        at = ase_sort(make_supercell(at, P, wrap=False, tol=1e-08))
+    ase_write(outp, at, direct=False, wrap=False)
 
     with open(outp, "r") as f:
         lines = [l.strip() for l in f.readlines()]
@@ -81,6 +81,7 @@ def write_poscar(poscar, name="POSCAR", comment=""):
 
 def iterate_supercell_primitive(inp, P, target):
     idx = 0
+    # Reading the files to POSCAR objects
     prim = read_poscar(inp, "POSCAR_xprimitive")
     supercell = read_poscar(inp, "POSCAR_xsuper", P)
 
