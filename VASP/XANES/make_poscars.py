@@ -156,7 +156,8 @@ def make_incar(
             with open("POSCAR", "r") as f:
                 lines = [l.strip() for l in f.readlines()]
             species = lines[5].split()
-            assert len(species) == len(counts)
+            new_counts = lines[6].split()
+            assert len(species) == len(new_counts)
             make_potcar(species, family=potpawFamily, useGW=useGW)
             hubU, hubL, hubJ, mgms = [], [], [], []
             for c, o in zip(counts, ordering):
