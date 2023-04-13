@@ -86,7 +86,7 @@ def iterate_supercell_primitive(inp, P, target):
 
     for site in tqdm(prim.sites, total=len(prim.sites)):
         if site.element == target:
-            tqdm.write("Found site.")
+            tqdm.write("Found a target site.")
             idx += 1
             supercellc = dcp(supercell)
             for sidx, supersite in enumerate(supercellc.sites):
@@ -148,6 +148,7 @@ def make_incar(
     for idx in range(1, iters + 1):
         dir = f"XANES_{target}_{idx}"
         dirs.append(dir)
+        print(f"Making and populating {dir}.")
         with cd(dir):
             runcmd(["cp", "../INCAR", "."])
             with open("POSCAR", "r") as f:
@@ -171,13 +172,13 @@ def make_incar(
                     hubJ.append(f"{c}*{hdict['J']}")
                     hubU.append(f"{c}*{hdict['U']}")
                     hubL.append(f"{c}*{hdict['l']}")
-            if magmoms is not None:
-                with open("INCAR", "a") as f:
+            with open("INCAR", "a") as f:
+                f.write(newline("##### Written by XANESMaker #####"))
+                if magmoms is not None:
                     ms = " ".join(mgms)
                     f.write(newline(f"MAGMOM = {ms}"))
                     f.write(newline("ISPIN = 2"))
-            if hubbardU is not None:
-                with open("INCAR", "a") as f:
+                if hubbardU is not None:
                     l = " ".join(hubL)
                     U = " ".join(hubU)
                     J = " ".join(hubJ)
@@ -187,15 +188,15 @@ def make_incar(
                     f.write(newline("LDAUU = " + U))
                     f.write(newline("LDAUJ = " + J))
                     f.write(newline("LDAUPRINT = 2"))
-                    f.write(newline("ICORELEVEL = 2"))
-                    f.write(newline(f"CLNT = {len(species)}"))
-                    f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
-                    f.write(newline(f"CLL = {XrayNotation.edge[Xtype]['l']}"))
-                    f.write(newline("CLZ = 1.0"))
-                    f.write(newline("CH_LSPEC = .TRUE."))
-                    f.write(newline("CH_SIGMA = 0.5"))
-                    f.write(newline(f"NBANDS = {nbands}"))
-                    f.write(newline(""))
+                f.write(newline("ICORELEVEL = 2"))
+                f.write(newline(f"CLNT = {len(species)}"))
+                f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
+                f.write(newline(f"CLL = {XrayNotation.edge[Xtype]['l']}"))
+                f.write(newline("CLZ = 1.0"))
+                f.write(newline("CH_LSPEC = .TRUE."))
+                f.write(newline("CH_SIGMA = 0.5"))
+                f.write(newline(f"NBANDS = {nbands}"))
+                f.write(newline(""))
     return dirs
 
 
