@@ -25,9 +25,11 @@ class AliasDict(dict):
     def add_alias(self, key, alias):
         self.aliases[alias] = key
 
+
 def get_lines(file_object):
     assert isinstance(file_object, TextIOWrapper)
     return [l.strip() for l in file_object.readlines()]
+
 
 class input_file:
     def __init__(self, fname) -> None:
@@ -35,6 +37,7 @@ class input_file:
             for line in get_lines(f):
                 pass
         pass
+
 
 @contextmanager
 def cd(newdir):
@@ -84,7 +87,9 @@ def handle_hubbard(luj, symbols):
     separated = [luj[i : i + n] for i in range(0, len(luj), n)]
     for indiv in separated:
         elements.append(indiv[0])
-        d[indiv[0]] = AliasDict(zip(labels, [types[i](x) for i, x in enumerate(indiv[-3:])]))
+        d[indiv[0]] = AliasDict(
+            zip(labels, [types[i](x) for i, x in enumerate(indiv[-3:])])
+        )
     for s in symbols:
         if s not in elements:
             d[s] = AliasDict(
@@ -102,6 +107,6 @@ def newline(s):
 
 def runcmd(cmd, outlocation=sp.PIPE, errlocation=sp.PIPE):
     if not isinstance(cmd, list):
-        cmd = [cmd]
+        cmd = cmd.split()
     output = sp.run(cmd, stdout=outlocation, stderr=errlocation)
     return output
