@@ -8,7 +8,7 @@ from io import TextIOWrapper
 class AliasDict(dict):
     """
     A derivative of the dict class to allow for dictionary keys to be aliased.
-    Stolen from jasonharper on StackOverflow (I won't tel; if you don't!)
+    Stolen from jasonharper on StackOverflow (I won't tell if you don't!)
     Thanks Jason :)
     """
 
@@ -77,13 +77,14 @@ def handle_hubbard(luj, symbols):
         print("Hubbard corrections not set.")
         return None
     labels = ["l", "U", "J"]
+    types = [int, float, float]
     n = 4
     elements = []
     d = AliasDict()
     separated = [luj[i : i + n] for i in range(0, len(luj), n)]
     for indiv in separated:
         elements.append(indiv[0])
-        d[indiv[0]] = AliasDict(zip(labels, [float(x) for x in indiv[-3:]]))
+        d[indiv[0]] = AliasDict(zip(labels, [types[i](x) for i, x in enumerate(indiv[-3:])]))
     for s in symbols:
         if s not in elements:
             d[s] = AliasDict(

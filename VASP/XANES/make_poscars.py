@@ -248,7 +248,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--gw", "-gw", action="store_true", help="Use GW POTCARs")
     args = parser.parse_args()
-
+    dirs = []
     P = np.array(
         [
             [int(args.supercell[0]), 0, 0],
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
 
-    directories = make_incar(
+    dirs =+ make_incar(
         iters,
         species_order,
         species_counts,
@@ -280,4 +280,4 @@ if __name__ == "__main__":
         useGW=args.gw,
     )
 
-    submit(directories, submission[0], submission[1])
+    submit(dirs, submission[0], submission[1])
