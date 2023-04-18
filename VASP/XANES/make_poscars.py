@@ -143,10 +143,15 @@ def make_incar(
     hubbardU=None,
     potpawFamily="potpaw_PBE",
     useGW=False,
+    nelect=None,
+    P=np.asarray[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
 ):
     dirs = []
     if not os.path.isfile("INCAR"):
         raise FileNotFoundError("INCAR")
+    if nelect is not None:
+        detP = np.linalg.det(P)
+        nelect = nelect * detP
     for idx in range(1, iters + 1):
         dir = f"XANES_{target}_{idx}"
         dirs.append(dir)
@@ -191,6 +196,8 @@ def make_incar(
                     f.write(newline("LDAUU = " + U))
                     f.write(newline("LDAUJ = " + J))
                     f.write(newline("LDAUPRINT = 2"))
+                if nelect is not None:
+                    f.write(newline(f"NELECT = {nelect}"))
                 f.write(newline("ICORELEVEL = 2"))
                 f.write(newline(f"CLNT = {len(species)}"))
                 f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
@@ -234,6 +241,12 @@ if __name__ == "__main__":
         default="K1",
     )
     parser.add_argument(
+        "--nelect",
+        "-nelect",
+        help="Number of electrons in the unit cell",
+        default=None,
+    )
+    parser.add_argument(
         "--bands",
         "-b",
         help="Number of bands to consider in the VASP calculation.",
@@ -256,6 +269,7 @@ if __name__ == "__main__":
             [0, 0, int(args.supercell[2])],
         ]
     )
+
     input_file = args.input
     target = args.target
     nbands = args.bands
@@ -268,7 +282,7 @@ if __name__ == "__main__":
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
 
-    dirs =+ make_incar(
+    dirs = make_incar(
         iters,
         species_order,
         species_counts,
@@ -278,6 +292,8 @@ if __name__ == "__main__":
         magmoms=magmoms,
         hubbardU=hubbardU,
         useGW=args.gw,
+        nelect=args.nelect,
+        P=P,
     )
 
     submit(dirs, submission[0], submission[1])
