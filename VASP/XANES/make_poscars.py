@@ -151,7 +151,7 @@ def make_incar(
         raise FileNotFoundError("INCAR")
     if nelect is not None:
         detP = np.linalg.det(P)
-        nelect = nelect * detP
+        nelect = int(nelect) * detP
     for idx in range(1, iters + 1):
         dir = f"XANES_{target}_{idx}"
         dirs.append(dir)
