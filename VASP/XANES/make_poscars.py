@@ -211,6 +211,7 @@ def make_incar(
 
 
 def submit(dirs, subcmd, subfile):
+    jids = []
     print("Submitting jobs")
     for dir in dirs:
         with cd(dir):
@@ -218,7 +219,10 @@ def submit(dirs, subcmd, subfile):
             _ = runcmd(["cp", f"../{subfile}", "."])
             print(f"Submitting in {pwd}")
             out = runcmd([subcmd, subfile])
-            print(out.stdout)
+            out_str = out.stdout.decode("utf-8")
+            print(out_str)
+            jids.append(out_str.split()[3])
+    return jids
 
 
 if __name__ == "__main__":
