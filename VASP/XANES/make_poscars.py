@@ -144,7 +144,7 @@ def make_incar(
     potpawFamily="potpaw_PBE",
     useGW=False,
     nelect=None,
-    P=np.asarray[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    P=np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
 ):
     dirs = []
     if not os.path.isfile("INCAR"):
