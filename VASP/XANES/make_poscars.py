@@ -205,7 +205,8 @@ def make_incar(
                 f.write(newline("CLZ = 1.0"))
                 f.write(newline("CH_LSPEC = .TRUE."))
                 f.write(newline("CH_SIGMA = 0.5"))
-                f.write(newline(f"NBANDS = {nbands}"))
+                if nbands is not None:
+                    f.write(newline(f"NBANDS = {nbands}"))
                 f.write(newline(""))
     return dirs
 
@@ -254,7 +255,7 @@ if __name__ == "__main__":
         "--bands",
         "-b",
         help="Number of bands to consider in the VASP calculation.",
-        default=400,
+        default=None,
     )
     parser.add_argument(
         "--sub",
