@@ -143,10 +143,15 @@ def make_incar(
     hubbardU=None,
     potpawFamily="potpaw_PBE",
     useGW=False,
+    nelect=None,
+    P=np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
 ):
     dirs = []
     if not os.path.isfile("INCAR"):
         raise FileNotFoundError("INCAR")
+    if nelect is not None:
+        detP = np.linalg.det(P)
+        nelect = int(nelect) * detP
     for idx in range(1, iters + 1):
         dir = f"XANES_{target}_{idx}"
         dirs.append(dir)
@@ -191,6 +196,8 @@ def make_incar(
                     f.write(newline("LDAUU = " + U))
                     f.write(newline("LDAUJ = " + J))
                     f.write(newline("LDAUPRINT = 2"))
+                if nelect is not None:
+                    f.write(newline(f"NELECT = {nelect}"))
                 f.write(newline("ICORELEVEL = 2"))
                 f.write(newline(f"CLNT = {len(species)}"))
                 f.write(newline(f"CLN = {XrayNotation.edge[Xtype]['n']}"))
@@ -198,12 +205,14 @@ def make_incar(
                 f.write(newline("CLZ = 1.0"))
                 f.write(newline("CH_LSPEC = .TRUE."))
                 f.write(newline("CH_SIGMA = 0.5"))
-                f.write(newline(f"NBANDS = {nbands}"))
+                if nbands is not None:
+                    f.write(newline(f"NBANDS = {nbands}"))
                 f.write(newline(""))
     return dirs
 
 
 def submit(dirs, subcmd, subfile):
+    jids = []
     print("Submitting jobs")
     for dir in dirs:
         with cd(dir):
@@ -211,7 +220,10 @@ def submit(dirs, subcmd, subfile):
             _ = runcmd(["cp", f"../{subfile}", "."])
             print(f"Submitting in {pwd}")
             out = runcmd([subcmd, subfile])
-            print(out.stdout)
+            out_str = out.stdout.decode("utf-8")
+            print(out_str)
+            jids.append(out_str.split()[3])
+    return jids
 
 
 if __name__ == "__main__":
@@ -234,10 +246,16 @@ if __name__ == "__main__":
         default="K1",
     )
     parser.add_argument(
+        "--nelect",
+        "-nelect",
+        help="Number of electrons in the unit cell",
+        default=None,
+    )
+    parser.add_argument(
         "--bands",
         "-b",
         help="Number of bands to consider in the VASP calculation.",
-        default=400,
+        default=None,
     )
     parser.add_argument(
         "--sub",
@@ -248,7 +266,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--gw", "-gw", action="store_true", help="Use GW POTCARs")
     args = parser.parse_args()
-
+    dirs = []
     P = np.array(
         [
             [int(args.supercell[0]), 0, 0],
@@ -256,6 +274,7 @@ if __name__ == "__main__":
             [0, 0, int(args.supercell[2])],
         ]
     )
+
     input_file = args.input
     target = args.target
     nbands = args.bands
@@ -268,7 +287,7 @@ if __name__ == "__main__":
     magmoms = handle_magmoms(args.magmoms, syms)
     hubbardU = handle_hubbard(args.luj, syms)
 
-    directories = make_incar(
+    dirs = make_incar(
         iters,
         species_order,
         species_counts,
@@ -278,6 +297,8 @@ if __name__ == "__main__":
         magmoms=magmoms,
         hubbardU=hubbardU,
         useGW=args.gw,
+        nelect=args.nelect,
+        P=P,
     )
 
-    submit(directories, submission[0], submission[1])
+    submit(dirs, submission[0], submission[1])
