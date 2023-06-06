@@ -1,0 +1,4 @@
+NOTE:
+Core-hole calculations with VASP may not be as accurate as other methods due to the approximation of the core electrons, as a sort of extension of the frozen core, albeit soft, pseudopotentials.
+
+
