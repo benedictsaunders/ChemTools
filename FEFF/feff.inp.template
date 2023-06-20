@@ -1,0 +1,32 @@
+TITLE columbite
+
+EDGE K
+S02 1.0
+
+COREHOLE RPA
+XANES 4.0 0.07 0.0
+
+CONTROL 1 1 1 1 1 1
+PRINT 5 1 1 1 1 1
+
+SCF 4.0
+FMS 6.0
+*LDOS -30 15 0.01
+
+* Options for a k-space calculation :
+RECIPROCAL
+*REAL
+
+* Use 200 k-points:
+KMESH 200
+
+TARGET
+
+* This advanced option is not usually necessary:
+STRFAC 1.0 0.0 0.0
+
+* Read crystal structure from cif file:
+CIF CIFLOCATION
+
+
+END
