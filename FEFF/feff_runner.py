@@ -7,6 +7,9 @@ import re
 from contextlib import contextmanager
 import os
 import shutil
+from glob import glob
+import argparse as ap
+from templates import FeffInpTemplate
 
 @contextmanager
 def cd(path):
@@ -68,19 +71,54 @@ def write_from_template(targets, cif_name, species):
             shutil.copy2(f"../{cif_name}", ".")
     return dirs
 
-def run_feff(feff_script):
-    if feff_script[0] != "/":
-        print("You must use the absolute path of the FEFF script. Exitting.")
-        exit()
-    fout = open("feff.out", "w")
-    p = sp.Popen(["bash", feff_script], stdout=fout, stderr=fout)
-    p.wait()
-    fout.close()
-    print("<++=== DONE ===++>")
+def write_from_template_class(title, targets, cif_name):
+    dirs = []
+    for target in targets:
+        directory = f"target_{species}_{target}"
+        dirs.append(directory)
+        with cd(directory):
+            FeffInpTemplate(title, target, cif_name)
+            shutil.copy2(f"../{cif_name}", ".")
+    return dirs
 
-species = "Fe"
-target_indices, cif_name = get_target_indices("c.cif", species)
-dirs = write_from_template(target_indices, cif_name, species)
-for d in dirs:
-    with cd(d):
-        run_feff(feff_script="/home/chem/msrzvr/scripts/FEFF/feff_mpi.bash")
+def run_feff(feff_script, dryrun = False):
+    if not dryrun:
+        if feff_script[0] != "/":
+            print("You must use the absolute path of the FEFF script. Exitting.")
+            exit()
+        fout = open("feff.out", "w")
+        p = sp.Popen(["bash", feff_script], stdout=fout, stderr=fout)
+        p.wait()
+        fout.close()
+        print("<++=== DONE ===++>")
+    else:
+        print("FEFF DRY RUN")
+
+if __name__ == "__main__":
+    parser = ap.ArgumentParser()
+    parser.add_argument("-i", "--inputs", nargs="+")
+    parser.add_argument("-t", "--target", required=True)
+    parser.add_argument("--dryrun", action = "store_true")
+    args = parser.parse_args()
+
+    target = args.target
+    dr = args.dryrun
+    files = args.inputs
+else:
+    files = glob("GLOB HERE")
+
+for f in files:
+    atoms = ase_read(f)
+    with cd("FEFF_XANES"):
+        dname = "".join(f.split("/")[-1].split(".")[:-1])
+        with cd(dname):
+            species = target
+            cifname = f"{dname}.cif"
+            atoms_to_cif(atoms, cifname)    
+            target_indices, cif_name = get_target_indices(cifname, species)
+            #dirs = write_from_template(target_indices, cif_name, species)
+            dirs = write_from_template_class(f"{species}_XANES", target_indices, cif_name)
+            for d in dirs:
+                with cd(d):
+                    shutil.copy2(f"../{cif_name}", ".")
+                    run_feff(feff_script="/home/chem/msrzvr/scripts/FEFF/feff_mpi.bash", dryrun=dr)
