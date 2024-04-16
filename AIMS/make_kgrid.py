@@ -1,11 +1,22 @@
 from sys import argv
 import numpy as np
 from aimstools import KGridFile, GeometryFile, KGridGenerator
+from copy import deepcopy as dcp
 
-def make2DKList(geom, gmax):
+def make2DKList(geometry, gmax):
     kgrid = KGridFile.KGridFile()
-    kgrid.setKGrid(geom=geom, k_grid_type="r_gmp", g_max=gmax, time_reversal=True)
+    print("Created KGridFile object")
+
+    kgrid.setKGrid(
+        geometry,
+        k_grid_type="r_gmp",
+        g_max=gmax,
+        time_reversal=True)
+    
+    print("Set KGrid")
+
     kgrid.saveToFile("k_list.in")
+    print("Saved KGrid to file")
 
 def print3DGridParams(geom, gmax):
     gmax = gmax * np.pi * 2
