@@ -4,10 +4,6 @@ with open("geometry.in", "r") as f:
 idx = 0
 dim = 0
 while True:
-    if lines[idx].startswith("#"):
-        idx += 1
-        continue
-
     if lines[idx].strip().startswith("lattice"):
         lattice = lines[idx].split()[1:]
         if dim in [0, 1]:
@@ -17,6 +13,8 @@ while True:
         else:
             break
     idx += 1
+    if idx == len(lines):
+        break
 
 
 with open("geometry.in", "w") as f:
