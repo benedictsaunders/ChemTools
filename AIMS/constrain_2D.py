@@ -17,7 +17,6 @@ while True:
                 break
         else:
             dim += 1
-            continue
     idx += 1
     if idx == len(lines):
         break
