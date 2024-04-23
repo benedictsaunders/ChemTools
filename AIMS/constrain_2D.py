@@ -5,7 +5,7 @@ idx = 0
 dim = 0
 while True:
     if lines[idx].strip().startswith("lattice"):
-        if not lines[idx+1].strip().startswith("lattice_vector"):
+        if not lines[idx+1].strip().startswith("constrain_relaxation"):
             lattice = lines[idx].split()[1:]
             if dim in [0, 1]:
                 lines.insert(idx+1, "constrain_relaxation z")
