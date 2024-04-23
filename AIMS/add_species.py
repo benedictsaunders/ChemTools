@@ -27,6 +27,27 @@ def writeSpeciesToControl(species, level):
         print(f"Appending {name} to control.in")
         concat(f"{DEFAULT_SPECIES_LOCATION}{level}/{name}", 'control.in')
 
+def checkExistingSpecies(delete = False):
+    """Check if the species defaults are already in the control.in file"""
+    existing = []
+    with open('control.in', 'r') as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            if line.strip().startswith("species"):
+                existing.append(line.split()[1])
+        print("Existing species:", *[f"\n{spc}" for spc in existing])
+    if len(existing) > 0:
+        if delete:
+            print("Deleting existing species defaults")
+            with open('control.in', 'r') as f:
+                lines = [line.strip() for line in f.readlines()]
+
+            
+        return True
+    else:
+        return False
+
 if __name__ == '__main__':
     args = argv + [None]
     if argv[1] == None:
@@ -38,6 +59,9 @@ if __name__ == '__main__':
     atoms = read('geometry.in')
     species = list(set(atoms.get_atomic_numbers()))
     species.sort()
+    if checkExistingSpecies():
+        print("Species defaults already in control.in, exiting")
+        exit(0)
     writeSpeciesToControl(species, level)
 
 
