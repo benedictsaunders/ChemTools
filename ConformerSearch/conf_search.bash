@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 SMILESFILE=smiles-list.txt
 NAMESFILE=names-list.txt
@@ -26,7 +26,8 @@ if test -f "$SMILESFILE"; then
                 mkdir $dirname
                 echo $dirname
                 cd $dirname
-                python conf_search.py -s $i -n 15000
+				SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+                python $SCRIPT_DIR/conf_search.py -s $i -n $1
                 cd ../
             fi
         done
@@ -39,6 +40,9 @@ else
             n) numconfs=${OPTARG};;
         esac
     done
-    python conf_search_min.py -s $smiles -n $numconfs
+	echo $s
+	echo $n
+	 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    python $SCRIPT_DIR/conf_search.py -s $smiles -n $numconfs
     cd ../
 fi

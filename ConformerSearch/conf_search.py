@@ -26,7 +26,12 @@ def getETKDGconfs(molObj, n=1500, seed=int(time.time()), minimize = True, steps 
     params = AllChem.ETKDGv3()
     params.useSmallRingTorsions = True
     params.randomSeed = int(seed)
-    params.numThreads = int(os.environ['OMP_NUM_THREADS'])
+    try:
+        threads = int(os.environ['OMP_NUM_THREADS'])
+    except:
+        print("Cannot set threads using OMP_NUM_THREADS. Defaulting to 4")
+        threads = 4
+    params.numThreads = threads
     params.useRandomCoords = True
     params.enforceChirality = True
 
@@ -49,7 +54,7 @@ def getETKDGconfs(molObj, n=1500, seed=int(time.time()), minimize = True, steps 
         confenergies.append(ff.CalcEnergy())
     AllChem.AlignMolConformers(molObj, RMSlist=rmslist1)
 
-    res = AllChem.MMFFOptimizeMoleculeConfs(molObj, numThreads = int(os.environ['OMP_NUM_THREADS']))
+    res = AllChem.MMFFOptimizeMoleculeConfs(molObj, numThreads = threads)
     AllChem.AlignMolConformers(molObj, RMSlist=rmslist2)
 
     with open('rdkit_mol_min.pickle', 'wb') as handle:

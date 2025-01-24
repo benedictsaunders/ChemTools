@@ -6,7 +6,7 @@ import shutil
 from copy import deepcopy as dcp
 
 # Default location of species defaults
-DEFAULT_SPECIES_LOCATION = f"{os.environ["HOME"]}/software/FHIaims/species_defaults/defaults_2020/"
+DEFAULT_SPECIES_LOCATION = f"{os.environ['HOME']}/software/FHIaims/species_defaults/defaults_2020/"
 
 def concat(infile, outfile, label, append = True):
     """Concatenate the contents of infile to outfile
